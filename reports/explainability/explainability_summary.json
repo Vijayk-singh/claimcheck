@@ -1,0 +1,152 @@
+{
+  "feature_importance_ranking": [
+    {
+      "feature": "historical_rejection_rate",
+      "display_name": "Provider Historical Rejection Rate",
+      "mean_abs_shap": 0.11945
+    },
+    {
+      "feature": "amount_deviation",
+      "display_name": "Procedure Fee Deviation (Z-Score)",
+      "mean_abs_shap": 0.1082
+    },
+    {
+      "feature": "amount_to_benchmark_ratio",
+      "display_name": "Charge to Benchmark Markup Ratio",
+      "mean_abs_shap": 0.0979
+    },
+    {
+      "feature": "missing_fields",
+      "display_name": "Missing Billing Fields Count",
+      "mean_abs_shap": 0.05104
+    },
+    {
+      "feature": "submission_delay",
+      "display_name": "Filing Delay (Days)",
+      "mean_abs_shap": 0.0359
+    },
+    {
+      "feature": "provider_claim_frequency",
+      "display_name": "Provider Monthly Volume",
+      "mean_abs_shap": 0.0166
+    },
+    {
+      "feature": "claim_amount",
+      "display_name": "Total Claim Charge ($)",
+      "mean_abs_shap": 0.01159
+    },
+    {
+      "feature": "service_month",
+      "display_name": "Service Month",
+      "mean_abs_shap": 0.00429
+    },
+    {
+      "feature": "procedure_code_99214",
+      "display_name": "CPT 99214",
+      "mean_abs_shap": 0.00328
+    },
+    {
+      "feature": "service_day_of_week",
+      "display_name": "Service Day of Week",
+      "mean_abs_shap": 0.00266
+    },
+    {
+      "feature": "procedure_code_80053",
+      "display_name": "CPT 80053",
+      "mean_abs_shap": 0.00087
+    },
+    {
+      "feature": "procedure_code_99284",
+      "display_name": "CPT 99284",
+      "mean_abs_shap": 0.00064
+    },
+    {
+      "feature": "procedure_code_71045",
+      "display_name": "CPT 71045",
+      "mean_abs_shap": 0.00019
+    },
+    {
+      "feature": "procedure_code_99213",
+      "display_name": "CPT 99213",
+      "mean_abs_shap": 8e-05
+    },
+    {
+      "feature": "duplicate_indicator",
+      "display_name": "Suspected Duplicate Submission",
+      "mean_abs_shap": 0.0
+    },
+    {
+      "feature": "high_submission_delay",
+      "display_name": "High Submission Delay (>60 Days)",
+      "mean_abs_shap": 0.0
+    },
+    {
+      "feature": "has_multiple_missing_fields",
+      "display_name": "Multiple Missing Fields (>=2)",
+      "mean_abs_shap": 0.0
+    },
+    {
+      "feature": "high_provider_rejection_rate",
+      "display_name": "Elevated Provider Rejection Spike (>20%)",
+      "mean_abs_shap": 0.0
+    },
+    {
+      "feature": "high_provider_claim_frequency",
+      "display_name": "High-Throughput Facility Flag",
+      "mean_abs_shap": 0.0
+    },
+    {
+      "feature": "high_amount_deviation",
+      "display_name": "Extreme Fee Outlier Flag (>2.0 Z)",
+      "mean_abs_shap": 0.0
+    },
+    {
+      "feature": "service_is_weekend",
+      "display_name": "Weekend Service Encounter",
+      "mean_abs_shap": 0.0
+    },
+    {
+      "feature": "procedure_code_27447",
+      "display_name": "CPT 27447",
+      "mean_abs_shap": 0.0
+    },
+    {
+      "feature": "procedure_code_36415",
+      "display_name": "CPT 36415",
+      "mean_abs_shap": 0.0
+    },
+    {
+      "feature": "procedure_code_43239",
+      "display_name": "CPT 43239",
+      "mean_abs_shap": 0.0
+    },
+    {
+      "feature": "procedure_code_70450",
+      "display_name": "CPT 70450",
+      "mean_abs_shap": 0.0
+    },
+    {
+      "feature": "procedure_code_93000",
+      "display_name": "CPT 93000",
+      "mean_abs_shap": 0.0
+    },
+    {
+      "feature": "procedure_code_99215",
+      "display_name": "CPT 99215",
+      "mean_abs_shap": 0.0
+    },
+    {
+      "feature": "procedure_code_99285",
+      "display_name": "CPT 99285",
+      "mean_abs_shap": 0.0
+    }
+  ],
+  "top_features": [
+    "historical_rejection_rate",
+    "amount_deviation",
+    "amount_to_benchmark_ratio",
+    "missing_fields",
+    "submission_delay"
+  ],
+  "feature_count": 28
+}

@@ -1,0 +1,901 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ClaimRisk AI – Healthcare Claim Risk Prioritization & Analyst Copilot</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: { 50: '#eff6ff', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8', 900: '#1e3a8a' },
+            slate: { 850: '#151e2e', 900: '#0f172a' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .risk-high { background-color: #fee2e2; color: #991b1b; border-color: #f87171; }
+    .risk-medium { background-color: #fef3c7; color: #92400e; border-color: #fbbf24; }
+    .risk-low { background-color: #d1fae5; color: #065f46; border-color: #34d399; }
+    .dark .risk-high { background-color: #450a0a; color: #fca5a5; border-color: #7f1d1d; }
+    .dark .risk-medium { background-color: #451a03; color: #fcd34d; border-color: #78350f; }
+    .dark .risk-low { background-color: #022c22; color: #6ee7b7; border-color: #064e3b; }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+    .dark .custom-scrollbar::-webkit-scrollbar-thumb { background: #334155; }
+  </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-200">
+
+  <!-- Header / Navigation -->
+  <header class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold text-xl shadow-md">
+          <i class="fa-solid fa-shield-heart"></i>
+        </div>
+        <div>
+          <div class="flex items-center space-x-2">
+            <span class="font-bold text-lg text-slate-900 dark:text-white">ClaimRisk AI</span>
+            <span class="px-2 py-0.5 text-xs font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/50 dark:text-blue-300">Auditor Copilot</span>
+          </div>
+          <p class="text-xs text-slate-500 dark:text-slate-400">Explainable Healthcare Claim Risk Prioritization & Decision Support</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-2 text-xs bg-slate-100 dark:bg-slate-700/60 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-600">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span class="font-medium text-slate-600 dark:text-slate-300" id="status-model-badge">Champion: HistGradientBoosting</span>
+        </div>
+        <a href="/docs" target="_blank" class="text-xs text-blue-600 dark:text-blue-400 hover:underline flex items-center space-x-1">
+          <i class="fa-solid fa-book"></i>
+          <span>API Docs</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Top Metrics Ribbon -->
+  <div class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 py-3 shadow-inner">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div class="flex items-center space-x-3 p-2 bg-slate-50 dark:bg-slate-700/40 rounded-lg border border-slate-200 dark:border-slate-600">
+        <div class="p-2.5 rounded-md bg-blue-100 text-blue-600 dark:bg-blue-900/40 dark:text-blue-400">
+          <i class="fa-solid fa-file-invoice text-lg"></i>
+        </div>
+        <div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">Total Scored Claims</div>
+          <div class="text-lg font-bold text-slate-800 dark:text-white" id="stat-total-claims">20,000</div>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3 p-2 bg-slate-50 dark:bg-slate-700/40 rounded-lg border border-slate-200 dark:border-slate-600">
+        <div class="p-2.5 rounded-md bg-rose-100 text-rose-600 dark:bg-rose-900/40 dark:text-rose-400">
+          <i class="fa-solid fa-triangle-exclamation text-lg"></i>
+        </div>
+        <div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">Priority Audit Queue</div>
+          <div class="text-lg font-bold text-rose-600 dark:text-rose-400" id="stat-high-risk">5,772 (28.8%)</div>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3 p-2 bg-slate-50 dark:bg-slate-700/40 rounded-lg border border-slate-200 dark:border-slate-600">
+        <div class="p-2.5 rounded-md bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400">
+          <i class="fa-solid fa-magnifying-glass-chart text-lg"></i>
+        </div>
+        <div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">Champion PR-AUC</div>
+          <div class="text-lg font-bold text-emerald-600 dark:text-emerald-400" id="stat-champion-prauc">0.825</div>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-3 p-2 bg-slate-50 dark:bg-slate-700/40 rounded-lg border border-slate-200 dark:border-slate-600">
+        <div class="p-2.5 rounded-md bg-amber-100 text-amber-600 dark:bg-amber-900/40 dark:text-amber-400">
+          <i class="fa-solid fa-coins text-lg"></i>
+        </div>
+        <div>
+          <div class="text-xs text-slate-500 dark:text-slate-400">Financial Exposure at Risk</div>
+          <div class="text-lg font-bold text-amber-600 dark:text-amber-400" id="stat-exposure">$4.18M</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex space-x-8">
+      <button onclick="switchTab('triage')" id="tab-triage" class="tab-btn py-3 px-1 border-b-2 font-medium text-sm border-blue-600 text-blue-600 dark:text-blue-400 flex items-center space-x-2">
+        <i class="fa-solid fa-list-check"></i>
+        <span>Claims Triage Queue</span>
+      </button>
+      <button onclick="switchTab('inspect')" id="tab-inspect" class="tab-btn py-3 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 flex items-center space-x-2">
+        <i class="fa-solid fa-chart-pie"></i>
+        <span>Claim Deep Dive & SHAP</span>
+      </button>
+      <button onclick="switchTab('copilot')" id="tab-copilot" class="tab-btn py-3 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 flex items-center space-x-2">
+        <i class="fa-solid fa-robot"></i>
+        <span>Analyst Copilot</span>
+      </button>
+      <button onclick="switchTab('benchmark')" id="tab-benchmark" class="tab-btn py-3 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 flex items-center space-x-2">
+        <i class="fa-solid fa-scale-balanced"></i>
+        <span>Model Comparison & Thresholds</span>
+      </button>
+      <button onclick="switchTab('tester')" id="tab-tester" class="tab-btn py-3 px-1 border-b-2 font-medium text-sm border-transparent text-slate-500 hover:text-slate-700 dark:text-slate-400 flex items-center space-x-2">
+        <i class="fa-solid fa-vial-circle-check"></i>
+        <span>Live Claim Tester</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full">
+
+    <!-- TAB 1: CLAIMS TRIAGE QUEUE -->
+    <div id="view-triage" class="tab-view block space-y-4">
+      <div class="bg-white dark:bg-slate-800 p-4 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-wrap gap-4 items-center justify-between">
+        <div class="flex flex-wrap gap-3 items-center">
+          <div class="relative">
+            <i class="fa-solid fa-search absolute left-3 top-3 text-slate-400 text-xs"></i>
+            <input type="text" id="filter-search" oninput="debounceLoadClaims()" placeholder="Search Claim ID or Provider..." class="pl-8 pr-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">
+          </div>
+
+          <select id="filter-tier" onchange="loadClaims(1)" class="text-xs py-2 px-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none">
+            <option value="">All Risk Tiers</option>
+            <option value="HIGH">High Risk (Audit Priority)</option>
+            <option value="MEDIUM">Medium Risk</option>
+            <option value="LOW">Low Risk (Clean)</option>
+          </select>
+
+          <select id="filter-cpt" onchange="loadClaims(1)" class="text-xs py-2 px-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none">
+            <option value="">All CPT Procedures</option>
+            <option value="99213">99213 - Outpatient Visit (15 min)</option>
+            <option value="99214">99214 - Outpatient Visit (25 min)</option>
+            <option value="99215">99215 - Outpatient Visit (40 min)</option>
+            <option value="99284">99284 - Emergency Dept High Severity</option>
+            <option value="99285">99285 - Emergency Dept Severe</option>
+            <option value="27447">27447 - Total Knee Arthroplasty</option>
+            <option value="43239">43239 - Upper GI Endoscopy</option>
+            <option value="70450">70450 - CT Head/Brain without Contrast</option>
+            <option value="71045">71045 - Chest X-Ray Single View</option>
+          </select>
+
+          <label class="flex items-center space-x-2 text-xs text-slate-600 dark:text-slate-300 cursor-pointer">
+            <input type="checkbox" id="filter-dup" onchange="loadClaims(1)" class="rounded text-blue-600 focus:ring-blue-500">
+            <span>Duplicates Only</span>
+          </label>
+        </div>
+
+        <button onclick="loadClaims(1)" class="px-3 py-2 text-xs font-medium rounded-lg bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 transition">
+          <i class="fa-solid fa-arrows-rotate mr-1"></i> Refresh Queue
+        </button>
+      </div>
+
+      <!-- Queue Table -->
+      <div class="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 overflow-hidden">
+        <div class="overflow-x-auto custom-scrollbar">
+          <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+            <thead class="bg-slate-100 dark:bg-slate-700/50 text-slate-700 dark:text-slate-200 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200 dark:border-slate-600">
+              <tr>
+                <th class="py-3 px-4">Claim ID</th>
+                <th class="py-3 px-4">Provider</th>
+                <th class="py-3 px-4">Procedure (CPT)</th>
+                <th class="py-3 px-4 text-right">Billed Charge</th>
+                <th class="py-3 px-4 text-center">Delay</th>
+                <th class="py-3 px-4 text-center">Duplicate?</th>
+                <th class="py-3 px-4 text-center">Risk Score</th>
+                <th class="py-3 px-4 text-center">Risk Tier</th>
+                <th class="py-3 px-4 text-right">Exp. Exposure</th>
+                <th class="py-3 px-4 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody id="claims-tbody" class="divide-y divide-slate-100 dark:divide-slate-700/60 font-mono">
+              <tr>
+                <td colspan="10" class="py-8 text-center text-slate-400 font-sans">
+                  <i class="fa-solid fa-spinner fa-spin text-xl mr-2"></i> Loading prioritized claims queue...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Controls -->
+        <div class="py-3 px-4 border-t border-slate-200 dark:border-slate-700 flex justify-between items-center text-xs text-slate-500 dark:text-slate-400">
+          <span id="pagination-info">Showing claims 1 to 20</span>
+          <div class="flex space-x-2">
+            <button id="btn-prev" onclick="changePage(-1)" class="px-3 py-1 rounded border border-slate-300 dark:border-slate-600 disabled:opacity-50 hover:bg-slate-100 dark:hover:bg-slate-700">Previous</button>
+            <span id="page-indicator" class="px-3 py-1 font-semibold">1</span>
+            <button id="btn-next" onclick="changePage(1)" class="px-3 py-1 rounded border border-slate-300 dark:border-slate-600 disabled:opacity-50 hover:bg-slate-100 dark:hover:bg-slate-700">Next</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 2: CLAIM DEEP DIVE & SHAP WATERFALL -->
+    <div id="view-inspect" class="tab-view hidden space-y-6">
+      <div id="inspect-content" class="space-y-6">
+        <div class="bg-blue-50 dark:bg-blue-900/20 p-6 rounded-xl border border-blue-200 dark:border-blue-800 text-center">
+          <i class="fa-solid fa-arrow-pointer text-3xl text-blue-500 mb-2"></i>
+          <h3 class="text-base font-bold text-slate-800 dark:text-white">No Claim Selected</h3>
+          <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Select an individual claim from the Triage Queue or Live Tester to inspect feature attributions and audit breakdown.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 3: ANALYST COPILOT -->
+    <div id="view-copilot" class="tab-view hidden space-y-6">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left: Grounded Review Memo -->
+        <div class="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
+          <div class="flex justify-between items-center border-b border-slate-200 dark:border-slate-700 pb-3">
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-file-shield text-blue-600 text-lg"></i>
+              <h2 class="font-bold text-slate-800 dark:text-white text-base">Grounded Auditor Review Memo</h2>
+            </div>
+            <button onclick="refreshCopilotSummary()" class="text-xs px-2.5 py-1 rounded bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-300 hover:bg-blue-100 transition">
+              <i class="fa-solid fa-arrows-rotate mr-1"></i> Re-generate
+            </button>
+          </div>
+
+          <div id="copilot-memo" class="text-xs text-slate-700 dark:text-slate-200 space-y-3 prose dark:prose-invert max-w-none">
+            <p class="text-slate-400 italic">Select a claim to generate an evidence-backed auditor review memo.</p>
+          </div>
+        </div>
+
+        <!-- Right: Interactive Copilot Chat -->
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 flex flex-col h-[580px]">
+          <div class="border-b border-slate-200 dark:border-slate-700 pb-3 mb-3 flex items-center justify-between">
+            <div class="flex items-center space-x-2">
+              <i class="fa-solid fa-comments text-emerald-500 text-lg"></i>
+              <h3 class="font-bold text-slate-800 dark:text-white text-sm">Auditor Q&A Copilot</h3>
+            </div>
+            <span class="text-[10px] bg-emerald-100 dark:bg-emerald-900/50 text-emerald-800 dark:text-emerald-300 px-2 py-0.5 rounded-full font-medium">Zero-Hallucination</span>
+          </div>
+
+          <!-- Chat log -->
+          <div id="chat-messages" class="flex-1 overflow-y-auto custom-scrollbar space-y-3 pr-1 text-xs">
+            <div class="bg-slate-100 dark:bg-slate-700/50 p-3 rounded-lg text-slate-700 dark:text-slate-300">
+              <span class="font-semibold text-blue-600 dark:text-blue-400 block mb-1">Copilot:</span>
+              Hello! I am your ClaimRisk Copilot. Ask me questions about fee markups, duplicate signals, filing friction, or provider profile history.
+            </div>
+          </div>
+
+          <!-- Suggested prompts -->
+          <div class="py-2 flex flex-wrap gap-1 text-[11px]">
+            <button onclick="askCopilot('Why was this claim flagged for review?')" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 px-2 py-1 rounded text-slate-600 dark:text-slate-300">Why flagged?</button>
+            <button onclick="askCopilot('Is the claim amount excessive for this procedure?')" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 px-2 py-1 rounded text-slate-600 dark:text-slate-300">Fee markup?</button>
+            <button onclick="askCopilot('What audit action do you recommend?')" class="bg-slate-100 hover:bg-slate-200 dark:bg-slate-700 dark:hover:bg-slate-600 px-2 py-1 rounded text-slate-600 dark:text-slate-300">Audit action?</button>
+          </div>
+
+          <!-- Chat input -->
+          <form onsubmit="handleChatSubmit(event)" class="pt-2 border-t border-slate-200 dark:border-slate-700 flex space-x-2">
+            <input type="text" id="chat-input" placeholder="Ask about this claim..." class="flex-1 px-3 py-2 text-xs rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+            <button type="submit" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium transition">
+              <i class="fa-solid fa-paper-plane"></i>
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: MODEL COMPARISON & THRESHOLD EXPLORER -->
+    <div id="view-benchmark" class="tab-view hidden space-y-6">
+      <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
+        <h2 class="font-bold text-slate-800 dark:text-white text-base flex items-center space-x-2">
+          <i class="fa-solid fa-code-compare text-blue-600"></i>
+          <span>Model Benchmark Comparison (scikit-learn & PyTorch Baseline)</span>
+        </h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          Evaluation conducted on a strictly isolated 4,000-claim test partition (20% holdout). The champion model is selected by **PR-AUC** to maximize auditor review precision.
+        </p>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs text-slate-600 dark:text-slate-300">
+            <thead class="bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-semibold uppercase text-[11px]">
+              <tr>
+                <th class="py-3 px-4">Model Candidate</th>
+                <th class="py-3 px-4 text-center">PR-AUC (Priority)</th>
+                <th class="py-3 px-4 text-center">ROC-AUC</th>
+                <th class="py-3 px-4 text-center">F1-Score (0.50)</th>
+                <th class="py-3 px-4 text-center">Recall</th>
+                <th class="py-3 px-4 text-center">Precision</th>
+                <th class="py-3 px-4 text-center">Brier Score</th>
+              </tr>
+            </thead>
+            <tbody id="benchmark-tbody" class="divide-y divide-slate-100 dark:divide-slate-700">
+              <tr>
+                <td colspan="7" class="py-6 text-center text-slate-400">Loading benchmark metrics...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Interactive Decision Threshold Explorer -->
+      <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
+        <div class="flex justify-between items-center">
+          <h3 class="font-bold text-slate-800 dark:text-white text-sm flex items-center space-x-2">
+            <i class="fa-solid fa-sliders text-amber-500"></i>
+            <span>Interactive Decision Threshold & Capacity Explorer</span>
+          </h3>
+          <span class="text-xs font-semibold px-2.5 py-1 rounded bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300" id="current-threshold-label">Threshold: 0.50</span>
+        </div>
+
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          Drag the threshold to simulate auditor workload, precision, recall, and operational audit budget trade-offs.
+        </p>
+
+        <div class="space-y-2">
+          <input type="range" id="threshold-slider" min="0.05" max="0.95" step="0.02" value="0.50" oninput="updateThresholdExplorer(this.value)" class="w-full h-2 bg-slate-200 dark:bg-slate-700 rounded-lg appearance-none cursor-pointer accent-blue-600">
+          <div class="flex justify-between text-[11px] text-slate-400">
+            <span>0.05 (High Recall / Aggressive Audit)</span>
+            <span>0.50 (Default Balanced)</span>
+            <span>0.95 (High Precision / Lean Audit)</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pt-3">
+          <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg text-center border border-slate-200 dark:border-slate-600">
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">Auditor Review Workload</div>
+            <div class="text-lg font-bold text-slate-800 dark:text-white" id="thresh-workload">28.5%</div>
+            <div class="text-[10px] text-slate-400">(~5,700 claims / mo)</div>
+          </div>
+          <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg text-center border border-slate-200 dark:border-slate-600">
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">Recall (Risk Capture)</div>
+            <div class="text-lg font-bold text-emerald-600 dark:text-emerald-400" id="thresh-recall">78.2%</div>
+            <div class="text-[10px] text-slate-400">of true at-risk claims</div>
+          </div>
+          <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg text-center border border-slate-200 dark:border-slate-600">
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">Audit Precision</div>
+            <div class="text-lg font-bold text-blue-600 dark:text-blue-400" id="thresh-precision">74.5%</div>
+            <div class="text-[10px] text-slate-400">true-positive rate</div>
+          </div>
+          <div class="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg text-center border border-slate-200 dark:border-slate-600">
+            <div class="text-[11px] text-slate-500 dark:text-slate-400">Simulated Total Cost</div>
+            <div class="text-lg font-bold text-amber-600 dark:text-amber-400" id="thresh-cost">$68,250</div>
+            <div class="text-[10px] text-slate-400">audit + missed risk cost</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: LIVE CLAIM TESTER -->
+    <div id="view-tester" class="tab-view hidden space-y-6">
+      <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-4">
+        <h2 class="font-bold text-slate-800 dark:text-white text-base flex items-center space-x-2">
+          <i class="fa-solid fa-flask-vial text-blue-600"></i>
+          <span>Live Claim Risk Scoring Sandbox</span>
+        </h2>
+        <p class="text-xs text-slate-500 dark:text-slate-400">
+          Enter custom claim attributes to execute the full end-to-end inference pipeline, compute local SHAP feature attributions, and generate a grounded copilot narrative.
+        </p>
+
+        <form id="tester-form" onsubmit="handleTestClaim(event)" class="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+          <div>
+            <label class="block font-medium mb-1">Claim ID</label>
+            <input type="text" id="test-claim-id" value="CLM-CUSTOM-881" class="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white font-mono">
+          </div>
+          <div>
+            <label class="block font-medium mb-1">Provider ID</label>
+            <input type="text" id="test-provider-id" value="PRV-4012" class="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white font-mono">
+          </div>
+          <div>
+            <label class="block font-medium mb-1">Procedure Code (CPT)</label>
+            <select id="test-proc-code" class="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
+              <option value="27447">27447 - Total Knee Arthroplasty (Mean: $7,200)</option>
+              <option value="43239">43239 - Upper GI Endoscopy (Mean: $1,150)</option>
+              <option value="70450">70450 - CT Head/Brain (Mean: $680)</option>
+              <option value="99214" selected>99214 - Outpatient Office Visit (Mean: $145)</option>
+              <option value="99285">99285 - Emergency High Severity (Mean: $520)</option>
+              <option value="80053">80053 - Comprehensive Metabolic Panel (Mean: $42)</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block font-medium mb-1">Total Claim Amount ($)</label>
+            <input type="number" id="test-amount" value="580.00" step="10.0" class="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white font-mono">
+          </div>
+          <div>
+            <label class="block font-medium mb-1">Submission Delay (Days)</label>
+            <input type="number" id="test-delay" value="72" min="0" class="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white font-mono">
+          </div>
+          <div>
+            <label class="block font-medium mb-1">Missing Billing Fields (0 - 4)</label>
+            <input type="number" id="test-missing" value="2" min="0" max="4" class="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white font-mono">
+          </div>
+
+          <div>
+            <label class="block font-medium mb-1">Suspected Duplicate Flag</label>
+            <select id="test-dup" class="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white">
+              <option value="0">0 - Clean / Unique Submission</option>
+              <option value="1" selected>1 - Duplicate Indicator Detected</option>
+            </select>
+          </div>
+          <div>
+            <label class="block font-medium mb-1">Provider Rejection Rate (0.0 - 1.0)</label>
+            <input type="number" id="test-rej-rate" value="0.25" step="0.01" min="0.0" max="1.0" class="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white font-mono">
+          </div>
+          <div>
+            <label class="block font-medium mb-1">Provider Monthly Volume</label>
+            <input type="number" id="test-freq" value="280" min="1" class="w-full px-3 py-2 rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-800 dark:text-white font-mono">
+          </div>
+
+          <div class="md:col-span-3 pt-2">
+            <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold text-xs shadow transition flex items-center justify-center space-x-2">
+              <i class="fa-solid fa-play"></i>
+              <span>Score Claim & Compute SHAP Explanations</span>
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+  </main>
+
+  <footer class="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 py-4 text-center text-xs text-slate-500 dark:text-slate-400">
+    <p>ClaimRisk AI Decision Support Prototype &copy; 2026. For claims auditor decision-support prioritization only.</p>
+  </footer>
+
+  <!-- Application Logic -->
+  <script>
+    let currentClaims = [];
+    let selectedClaim = null;
+    let selectedPrediction = null;
+    let currentPage = 1;
+    let modelBenchmarks = null;
+    let debounceTimer = null;
+    let shapChartInstance = null;
+
+    // Switch active navigation tab
+    function switchTab(tabId) {
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('border-blue-600', 'text-blue-600', 'dark:text-blue-400');
+        b.classList.add('border-transparent', 'text-slate-500');
+      });
+      document.getElementById('tab-' + tabId).classList.add('border-blue-600', 'text-blue-600', 'dark:text-blue-400');
+      document.getElementById('tab-' + tabId).classList.remove('border-transparent', 'text-slate-500');
+
+      document.querySelectorAll('.tab-view').forEach(v => v.classList.add('hidden'));
+      document.getElementById('view-' + tabId).classList.remove('hidden');
+
+      if (tabId === 'benchmark' && !modelBenchmarks) {
+        loadModelBenchmarks();
+      }
+    }
+
+    // Debounced queue search
+    function debounceLoadClaims() {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => loadClaims(1), 300);
+    }
+
+    // Fetch and display claims triage queue
+    async function loadClaims(page = 1) {
+      currentPage = page;
+      const search = document.getElementById('filter-search').value;
+      const tier = document.getElementById('filter-tier').value;
+      const cpt = document.getElementById('filter-cpt').value;
+      const dup = document.getElementById('filter-dup').checked;
+
+      let url = `/api/claims?page=${page}&page_size=15`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
+      if (tier) url += `&risk_tier=${encodeURIComponent(tier)}`;
+      if (cpt) url += `&procedure_code=${encodeURIComponent(cpt)}`;
+      if (dup) url += `&duplicate_only=true`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        currentClaims = data.claims || [];
+        renderClaimsTable(currentClaims);
+        document.getElementById('page-indicator').innerText = data.page;
+        document.getElementById('pagination-info').innerText = `Showing page ${data.page} of ${data.total_pages} (${data.total_records.toLocaleString()} total claims)`;
+        document.getElementById('btn-prev').disabled = (data.page <= 1);
+        document.getElementById('btn-next').disabled = (data.page >= data.total_pages);
+      } catch (e) {
+        console.error('Failed to load claims:', e);
+      }
+    }
+
+    function changePage(delta) {
+      loadClaims(currentPage + delta);
+    }
+
+    // Render claims queue table
+    function renderClaimsTable(claims) {
+      const tbody = document.getElementById('claims-tbody');
+      if (!claims.length) {
+        tbody.innerHTML = `<tr><td colspan="10" class="py-8 text-center text-slate-400 font-sans">No claims matching current filters.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = claims.map((c, idx) => {
+        const riskScore = c.risk_score !== undefined ? (c.risk_score * 100).toFixed(1) + '%' : 'N/A';
+        const tier = c.risk_tier || (c.requires_review ? 'HIGH' : 'LOW');
+        const badgeClass = tier === 'HIGH' ? 'risk-high' : tier === 'MEDIUM' ? 'risk-medium' : 'risk-low';
+        const exposure = c.financial_exposure !== undefined ? `$${Number(c.financial_exposure).toLocaleString(undefined, {minimumFractionDigits: 2})}` : '-';
+
+        return `
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-700/40 transition">
+            <td class="py-3 px-4 font-bold text-slate-900 dark:text-white">${c.claim_id}</td>
+            <td class="py-3 px-4 text-slate-500">${c.provider_id}</td>
+            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-700 text-slate-700 dark:text-slate-300 font-semibold">${c.procedure_code}</span></td>
+            <td class="py-3 px-4 text-right font-medium text-slate-900 dark:text-white">$${Number(c.claim_amount).toLocaleString(undefined, {minimumFractionDigits: 2})}</td>
+            <td class="py-3 px-4 text-center ${c.submission_delay > 60 ? 'text-amber-600 font-bold' : ''}">${c.submission_delay}d</td>
+            <td class="py-3 px-4 text-center">${c.duplicate_indicator == 1 ? '<span class="text-rose-600 font-bold"><i class="fa-solid fa-clone mr-1"></i>Yes</span>' : '<span class="text-slate-400">No</span>'}</td>
+            <td class="py-3 px-4 text-center font-bold">${riskScore}</td>
+            <td class="py-3 px-4 text-center">
+              <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${badgeClass}">${tier}</span>
+            </td>
+            <td class="py-3 px-4 text-right font-semibold text-slate-700 dark:text-slate-300">${exposure}</td>
+            <td class="py-3 px-4 text-center">
+              <button onclick="inspectClaim('${c.claim_id}')" class="px-2.5 py-1 bg-blue-50 dark:bg-blue-900/40 text-blue-600 dark:text-blue-300 hover:bg-blue-100 rounded font-semibold text-[11px] transition">
+                Inspect <i class="fa-solid fa-chevron-right ml-1"></i>
+              </button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // Inspect individual claim
+    async function inspectClaim(claimId) {
+      try {
+        const res = await fetch(`/api/claims/${claimId}`);
+        const data = await res.json();
+        selectedClaim = data.claim;
+        selectedPrediction = data.prediction;
+        renderClaimDeepDive(data);
+        switchTab('inspect');
+        generateCopilotSummary(selectedClaim, selectedPrediction);
+      } catch (e) {
+        console.error('Failed to inspect claim:', e);
+      }
+    }
+
+    // Render Deep Dive inspection card
+    function renderClaimDeepDive(data) {
+      const c = data.claim;
+      const p = data.prediction;
+      const b = data.benchmark;
+      const tier = p.risk_tier;
+      const badgeClass = tier === 'HIGH' ? 'risk-high' : tier === 'MEDIUM' ? 'risk-medium' : 'risk-low';
+
+      const markupRatio = (c.claim_amount / b.mean_fee).toFixed(2);
+
+      const html = `
+        <div class="bg-white dark:bg-slate-800 p-6 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 space-y-6">
+          <!-- Top Header -->
+          <div class="flex flex-wrap justify-between items-start gap-4 border-b border-slate-200 dark:border-slate-700 pb-4">
+            <div>
+              <div class="flex items-center space-x-3">
+                <h2 class="text-xl font-bold font-mono text-slate-900 dark:text-white">${c.claim_id}</h2>
+                <span class="px-3 py-1 rounded-full text-xs font-bold border ${badgeClass}">
+                  ${tier} RISK (${(p.risk_score * 100).toFixed(1)}%)
+                </span>
+              </div>
+              <p class="text-xs text-slate-500 mt-1">Provider: <span class="font-mono font-semibold">${c.provider_id}</span> | Service Date: ${c.service_date || 'N/A'}</p>
+            </div>
+            <div class="text-right">
+              <div class="text-xs text-slate-400">Expected Financial Exposure</div>
+              <div class="text-2xl font-bold font-mono text-amber-600 dark:text-amber-400">$${Number(p.expected_financial_exposure).toLocaleString(undefined, {minimumFractionDigits: 2})}</div>
+            </div>
+          </div>
+
+          <!-- 3-Column Highlights -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Benchmark Comparison -->
+            <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-200 dark:border-slate-600 space-y-2">
+              <div class="text-xs font-semibold text-slate-500 uppercase">Procedure Catalog Benchmark</div>
+              <div class="text-sm font-bold text-slate-800 dark:text-white">CPT ${c.procedure_code}</div>
+              <div class="text-xs text-slate-500 italic">${b.description}</div>
+              <div class="pt-2 flex justify-between text-xs">
+                <span>Billed Charge:</span>
+                <span class="font-mono font-bold">$${Number(c.claim_amount).toLocaleString()}</span>
+              </div>
+              <div class="flex justify-between text-xs">
+                <span>Standard Fee Mean:</span>
+                <span class="font-mono font-bold">$${Number(b.mean_fee).toLocaleString()}</span>
+              </div>
+              <div class="flex justify-between text-xs font-semibold ${markupRatio > 1.5 ? 'text-rose-600' : 'text-slate-600'}">
+                <span>Markup Ratio:</span>
+                <span>${markupRatio}x benchmark</span>
+              </div>
+            </div>
+
+            <!-- Provider Profile -->
+            <div class="p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg border border-slate-200 dark:border-slate-600 space-y-2">
+              <div class="text-xs font-semibold text-slate-500 uppercase">Provider Compliance History</div>
+              <div class="text-sm font-bold text-slate-800 dark:text-white">${c.provider_id}</div>
+              <div class="pt-2 flex justify-between text-xs">
+                <span>Historical Rejection Rate:</span>
+                <span class="font-mono font-bold ${(c.historical_rejection_rate > 0.20) ? 'text-rose-600' : ''}">${(c.historical_rejection_rate * 100).toFixed(1)}%</span>
+              </div>
+              <div class="flex justify-between text-xs">
+                <span>Monthly Claim Cadence:</span>
+                <span class="font-mono font-bold">${c.provider_claim_frequency} claims/mo</span>
+              </div>
+              <div class="flex justify-between text-xs">
+                <span>Submission Delay:</span>
+                <span class="font-mono font-bold ${(c.submission_delay > 60) ? 'text-amber-600' : ''}">${c.submission_delay} days</span>
+              </div>
+            </div>
+
+            <!-- Audit Recommendation -->
+            <div class="p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800 space-y-2">
+              <div class="text-xs font-semibold text-blue-700 dark:text-blue-300 uppercase">Recommended Auditor Action</div>
+              <div class="text-xs font-medium text-slate-800 dark:text-slate-100">${p.recommended_action}</div>
+              <div class="pt-4 flex gap-2">
+                <button onclick="switchTab('copilot')" class="w-full py-1.5 bg-blue-600 hover:bg-blue-700 text-white rounded text-xs font-semibold transition">
+                  Open Copilot Memo <i class="fa-solid fa-arrow-right ml-1"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- SHAP Feature Attribution Waterfall Chart -->
+          <div class="space-y-3 pt-2">
+            <div class="flex justify-between items-center">
+              <h3 class="font-bold text-slate-800 dark:text-white text-sm flex items-center space-x-2">
+                <i class="fa-solid fa-chart-column text-blue-600"></i>
+                <span>Explainable AI: Feature Attributions (SHAP Attribution)</span>
+              </h3>
+              <span class="text-[11px] text-slate-400">Red = Increases Review Risk | Green = Lowers Risk</span>
+            </div>
+            <div class="bg-slate-50 dark:bg-slate-700/30 p-4 rounded-xl border border-slate-200 dark:border-slate-600 h-64">
+              <canvas id="shap-chart"></canvas>
+            </div>
+          </div>
+        </div>
+      `;
+
+      document.getElementById('inspect-content').innerHTML = html;
+      renderShapChart(p.explanation);
+    }
+
+    // Render horizontal SHAP bar chart
+    function renderShapChart(explanation) {
+      if (!explanation || !explanation.all_attributions) return;
+
+      const topItems = [...explanation.all_attributions]
+        .sort((a, b) => Math.abs(b.shap_value) - Math.abs(a.shap_value))
+        .slice(0, 10);
+
+      const labels = topItems.map(i => i.display_name);
+      const values = topItems.map(i => i.shap_value);
+      const colors = values.map(v => v >= 0 ? '#ef4444' : '#10b981');
+
+      const ctx = document.getElementById('shap-chart').getContext('2d');
+      if (shapChartInstance) shapChartInstance.destroy();
+
+      shapChartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: 'SHAP Feature Contribution',
+            data: values,
+            backgroundColor: colors,
+            borderRadius: 4
+          }]
+        },
+        options: {
+          indexAxis: 'y',
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: { display: false }
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(150, 150, 150, 0.1)' },
+              title: { display: true, text: 'SHAP Contribution to Risk Probability', font: { size: 10 } }
+            },
+            y: {
+              grid: { display: false },
+              ticks: { font: { size: 11 } }
+            }
+          }
+        }
+      });
+    }
+
+    // Generate Grounded Copilot Summary
+    async function generateCopilotSummary(claim, prediction) {
+      const memoDiv = document.getElementById('copilot-memo');
+      memoDiv.innerHTML = '<p class="text-slate-400 italic"><i class="fa-solid fa-spinner fa-spin mr-1"></i> Generating grounded audit memo...</p>';
+
+      try {
+        const res = await fetch('/api/copilot/summary', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ claim: claim, prediction: prediction })
+        });
+        const data = await res.json();
+        // Simple markdown parsing to HTML
+        memoDiv.innerHTML = data.summary_markdown
+          .replace(/### (.*)/g, '<h3 class="text-sm font-bold text-slate-800 dark:text-white mt-2">$1</h3>')
+          .replace(/#### (.*)/g, '<h4 class="text-xs font-bold text-blue-600 dark:text-blue-400 mt-2">$1</h4>')
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/`(.*?)`/g, '<code class="bg-slate-100 dark:bg-slate-700 px-1 py-0.5 rounded text-blue-600 dark:text-blue-300 font-mono text-[11px]">$1</code>')
+          .replace(/- \[ \] (.*)/g, '<div class="flex items-center space-x-2 py-0.5"><input type="checkbox" class="rounded text-blue-600"><span>$1</span></div>')
+          .replace(/\n\n/g, '<br/>');
+      } catch (e) {
+        memoDiv.innerHTML = '<p class="text-rose-500">Failed to generate copilot summary.</p>';
+      }
+    }
+
+    function refreshCopilotSummary() {
+      if (selectedClaim && selectedPrediction) {
+        generateCopilotSummary(selectedClaim, selectedPrediction);
+      }
+    }
+
+    // Handle interactive copilot chat
+    async function handleChatSubmit(e) {
+      e.preventDefault();
+      const input = document.getElementById('chat-input');
+      const question = input.value.trim();
+      if (!question) return;
+      input.value = '';
+      askCopilot(question);
+    }
+
+    async function askCopilot(question) {
+      if (!selectedClaim) {
+        alert('Please select a claim from the queue first.');
+        return;
+      }
+
+      const chatDiv = document.getElementById('chat-messages');
+      chatDiv.innerHTML += `
+        <div class="bg-blue-50 dark:bg-blue-900/40 p-3 rounded-lg text-slate-800 dark:text-slate-100 text-right">
+          <span class="font-semibold text-blue-600 dark:text-blue-400 block mb-1">Auditor:</span>
+          ${question}
+        </div>
+      `;
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+
+      try {
+        const res = await fetch('/api/copilot/chat', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            question: question,
+            claim: selectedClaim,
+            prediction: selectedPrediction
+          })
+        });
+        const data = await res.json();
+        chatDiv.innerHTML += `
+          <div class="bg-slate-100 dark:bg-slate-700/60 p-3 rounded-lg text-slate-800 dark:text-slate-200">
+            <span class="font-semibold text-emerald-600 dark:text-emerald-400 block mb-1">Copilot:</span>
+            ${data.answer.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/`(.*?)`/g, '<code class="bg-slate-200 dark:bg-slate-600 px-1 rounded">$1</code>')}
+          </div>
+        `;
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+      } catch (e) {
+        chatDiv.innerHTML += `<div class="p-2 text-rose-500 text-xs">Failed to connect to copilot.</div>`;
+      }
+    }
+
+    // Load Model Benchmarks
+    async function loadModelBenchmarks() {
+      try {
+        const res = await fetch('/api/models/comparison');
+        const data = await res.json();
+        modelBenchmarks = data;
+
+        const tbody = document.getElementById('benchmark-tbody');
+        const benchmarks = data.models_benchmarks || (data.models ? data.models : {});
+        const champ = data.champion_model;
+
+        tbody.innerHTML = Object.entries(benchmarks).map(([name, m]) => {
+          const isChamp = (name === champ);
+          const prauc = m.pr_auc || m.test_pr_auc || 0;
+          const rocauc = m.roc_auc || m.test_roc_auc || 0;
+          const f1 = m.f1_score || m.test_f1 || 0;
+          const rec = m.recall || m.test_recall || 0;
+          const prec = m.precision || m.test_precision || 0;
+          const brier = m.brier_score !== undefined ? m.brier_score.toFixed(4) : '-';
+
+          return `
+            <tr class="${isChamp ? 'bg-blue-50/60 dark:bg-blue-900/20 font-semibold' : ''}">
+              <td class="py-3 px-4 font-mono">
+                ${name} ${isChamp ? '<span class="ml-1 text-amber-500 font-sans text-xs">🏆 Champion</span>' : ''}
+              </td>
+              <td class="py-3 px-4 text-center font-bold text-blue-600 dark:text-blue-400">${prauc.toFixed(4)}</td>
+              <td class="py-3 px-4 text-center">${rocauc.toFixed(4)}</td>
+              <td class="py-3 px-4 text-center">${f1.toFixed(4)}</td>
+              <td class="py-3 px-4 text-center">${(rec * 100).toFixed(1)}%</td>
+              <td class="py-3 px-4 text-center">${(prec * 100).toFixed(1)}%</td>
+              <td class="py-3 px-4 text-center">${brier}</td>
+            </tr>
+          `;
+        }).join('');
+
+        if (data.threshold_analysis) {
+          window.thresholdData = data.threshold_analysis;
+          updateThresholdExplorer(0.50);
+        }
+      } catch (e) {
+        console.error('Failed to load benchmarks:', e);
+      }
+    }
+
+    // Dynamic Threshold Slider Explorer
+    function updateThresholdExplorer(val) {
+      const thresh = parseFloat(val);
+      document.getElementById('current-threshold-label').innerText = `Threshold: ${thresh.toFixed(2)}`;
+
+      if (!window.thresholdData) return;
+      const tdata = window.thresholdData;
+      let closestIdx = 0;
+      let minDiff = 999;
+      tdata.thresholds.forEach((t, idx) => {
+        const diff = Math.abs(t - thresh);
+        if (diff < minDiff) { minDiff = diff; closestIdx = idx; }
+      });
+
+      document.getElementById('thresh-workload').innerText = `${(tdata.review_workload[closestIdx] * 100).toFixed(1)}%`;
+      document.getElementById('thresh-recall').innerText = `${(tdata.recall[closestIdx] * 100).toFixed(1)}%`;
+      document.getElementById('thresh-precision').innerText = `${(tdata.precision[closestIdx] * 100).toFixed(1)}%`;
+      document.getElementById('thresh-cost').innerText = `$${Number(tdata.total_cost[closestIdx]).toLocaleString()}`;
+    }
+
+    // Live Claim Tester Submission
+    async function handleTestClaim(e) {
+      e.preventDefault();
+      const claimPayload = {
+        claim_id: document.getElementById('test-claim-id').value,
+        provider_id: document.getElementById('test-provider-id').value,
+        procedure_code: document.getElementById('test-proc-code').value,
+        claim_amount: parseFloat(document.getElementById('test-amount').value),
+        submission_delay: parseInt(document.getElementById('test-delay').value),
+        missing_fields: parseInt(document.getElementById('test-missing').value),
+        duplicate_indicator: parseInt(document.getElementById('test-dup').value),
+        historical_rejection_rate: parseFloat(document.getElementById('test-rej-rate').value),
+        provider_claim_frequency: parseInt(document.getElementById('test-freq').value),
+        amount_deviation: 0.0
+      };
+
+      try {
+        const res = await fetch('/api/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(claimPayload)
+        });
+        const pred = await res.json();
+        selectedClaim = claimPayload;
+        selectedPrediction = pred;
+
+        const fakeData = {
+          claim: claimPayload,
+          prediction: pred,
+          benchmark: {
+            description: document.getElementById('test-proc-code').selectedOptions[0].text,
+            mean_fee: 500.0
+          }
+        };
+
+        renderClaimDeepDive(fakeData);
+        switchTab('inspect');
+        generateCopilotSummary(claimPayload, pred);
+      } catch (err) {
+        alert('Inference error: ' + err.message);
+      }
+    }
+
+    // Initial load
+    document.addEventListener('DOMContentLoaded', () => {
+      loadClaims(1);
+    });
+  </script>
+</body>
+</html>

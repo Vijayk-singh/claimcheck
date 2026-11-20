@@ -1,0 +1,298 @@
+{
+  "profiling": {
+    "dimensions": {
+      "rows": 20000,
+      "columns": 14
+    },
+    "column_types": {
+      "claim_id": "str",
+      "provider_id": "str",
+      "procedure_code": "str",
+      "claim_amount": "float64",
+      "approved_amount": "float64",
+      "service_date": "str",
+      "submission_date": "str",
+      "submission_delay": "int64",
+      "missing_fields": "int64",
+      "duplicate_indicator": "int64",
+      "provider_claim_frequency": "int64",
+      "historical_rejection_rate": "float64",
+      "amount_deviation": "float64",
+      "requires_review": "int64"
+    },
+    "missing_analysis": {
+      "total_missing_cells": 0,
+      "columns": {
+        "claim_id": {
+          "missing_count": 0,
+          "missing_percentage": 0.0
+        },
+        "provider_id": {
+          "missing_count": 0,
+          "missing_percentage": 0.0
+        },
+        "procedure_code": {
+          "missing_count": 0,
+          "missing_percentage": 0.0
+        },
+        "claim_amount": {
+          "missing_count": 0,
+          "missing_percentage": 0.0
+        },
+        "approved_amount": {
+          "missing_count": 0,
+          "missing_percentage": 0.0
+        },
+        "service_date": {
+          "missing_count": 0,
+          "missing_percentage": 0.0
+        },
+        "submission_date": {
+          "missing_count": 0,
+          "missing_percentage": 0.0
+        },
+        "submission_delay": {
+          "missing_count": 0,
+          "missing_percentage": 0.0
+        },
+        "missing_fields": {
+          "missing_count": 0,
+          "missing_percentage": 0.0
+        },
+        "duplicate_indicator": {
+          "missing_count": 0,
+          "missing_percentage": 0.0
+        },
+        "provider_claim_frequency": {
+          "missing_count": 0,
+          "missing_percentage": 0.0
+        },
+        "historical_rejection_rate": {
+          "missing_count": 0,
+          "missing_percentage": 0.0
+        },
+        "amount_deviation": {
+          "missing_count": 0,
+          "missing_percentage": 0.0
+        },
+        "requires_review": {
+          "missing_count": 0,
+          "missing_percentage": 0.0
+        }
+      }
+    },
+    "duplicate_analysis": {
+      "duplicate_full_rows": 0,
+      "claim_id_unique": true,
+      "claim_id_duplicates": 0
+    },
+    "numeric_statistics": {
+      "claim_amount": {
+        "count": 20000,
+        "mean": 336.6464,
+        "std": 823.0736,
+        "min": 13.42,
+        "25%": 95.5975,
+        "50%": 138.49,
+        "75%": 289.8525,
+        "max": 23410.24,
+        "skewness": 11.988,
+        "kurtosis": 233.6501
+      },
+      "approved_amount": {
+        "count": 20000,
+        "mean": 211.3397,
+        "std": 474.5064,
+        "min": 0.0,
+        "25%": 59.0875,
+        "50%": 96.29,
+        "75%": 162.42,
+        "max": 4230.7,
+        "skewness": 6.2017,
+        "kurtosis": 42.1015
+      },
+      "submission_delay": {
+        "count": 20000,
+        "mean": 23.6252,
+        "std": 32.7709,
+        "min": 2.0,
+        "25%": 10.0,
+        "50%": 15.0,
+        "75%": 21.0,
+        "max": 209.0,
+        "skewness": 3.7367,
+        "kurtosis": 13.9946
+      },
+      "missing_fields": {
+        "count": 20000,
+        "mean": 0.4875,
+        "std": 0.8338,
+        "min": 0.0,
+        "25%": 0.0,
+        "50%": 0.0,
+        "75%": 1.0,
+        "max": 4.0,
+        "skewness": 1.8599,
+        "kurtosis": 3.1825
+      },
+      "duplicate_indicator": {
+        "count": 20000,
+        "mean": 0.0265,
+        "std": 0.1606,
+        "min": 0.0,
+        "25%": 0.0,
+        "50%": 0.0,
+        "75%": 0.0,
+        "max": 1.0,
+        "skewness": 5.8965,
+        "kurtosis": 32.7716
+      },
+      "provider_claim_frequency": {
+        "count": 20000,
+        "mean": 226.5701,
+        "std": 187.2085,
+        "min": 33.0,
+        "25%": 81.0,
+        "50%": 125.0,
+        "75%": 371.0,
+        "max": 701.0,
+        "skewness": 0.9454,
+        "kurtosis": -0.3062
+      },
+      "historical_rejection_rate": {
+        "count": 20000,
+        "mean": 0.1165,
+        "std": 0.0904,
+        "min": 0.01,
+        "25%": 0.0476,
+        "50%": 0.0843,
+        "75%": 0.1679,
+        "max": 0.444,
+        "skewness": 1.3786,
+        "kurtosis": 1.8401
+      },
+      "amount_deviation": {
+        "count": 20000,
+        "mean": 1.1305,
+        "std": 4.8689,
+        "min": -4.098,
+        "25%": -0.623,
+        "50%": 0.081,
+        "75%": 0.8192,
+        "max": 36.943,
+        "skewness": 4.1344,
+        "kurtosis": 17.5825
+      },
+      "requires_review": {
+        "count": 20000,
+        "mean": 0.2885,
+        "std": 0.4531,
+        "min": 0.0,
+        "25%": 0.0,
+        "50%": 0.0,
+        "75%": 1.0,
+        "max": 1.0,
+        "skewness": 0.9334,
+        "kurtosis": -1.1288
+      }
+    },
+    "categorical_statistics": {
+      "procedure_code": {
+        "99213": {
+          "count": 4360,
+          "percentage": 21.8
+        },
+        "99214": {
+          "count": 3983,
+          "percentage": 19.92
+        },
+        "71045": {
+          "count": 2002,
+          "percentage": 10.01
+        },
+        "80053": {
+          "count": 1675,
+          "percentage": 8.38
+        },
+        "99215": {
+          "count": 1580,
+          "percentage": 7.9
+        },
+        "99284": {
+          "count": 1412,
+          "percentage": 7.06
+        },
+        "93000": {
+          "count": 1205,
+          "percentage": 6.02
+        },
+        "70450": {
+          "count": 1038,
+          "percentage": 5.19
+        },
+        "99285": {
+          "count": 987,
+          "percentage": 4.93
+        },
+        "36415": {
+          "count": 967,
+          "percentage": 4.84
+        },
+        "43239": {
+          "count": 411,
+          "percentage": 2.05
+        },
+        "27447": {
+          "count": 380,
+          "percentage": 1.9
+        }
+      },
+      "provider_id": {
+        "unique_providers": 250,
+        "mean_claims_per_provider": 80.0,
+        "max_claims_single_provider": 480,
+        "min_claims_single_provider": 17
+      }
+    },
+    "target_distribution": {
+      "clean_claims_count_0": 14229,
+      "requires_review_count_1": 5771,
+      "positive_class_percentage": 28.855,
+      "class_ratio_clean_to_review": 2.47
+    }
+  },
+  "data_quality": {
+    "financial_integrity": {
+      "negative_or_zero_claim_amounts": 0,
+      "negative_approved_amounts": 0,
+      "approved_exceeds_claim_amount": 0,
+      "is_valid": true
+    },
+    "temporal_integrity": {
+      "submission_precedes_service_count": 0,
+      "submission_delay_calculation_mismatches": 0,
+      "is_valid": true
+    },
+    "amount_deviation_outliers": {
+      "outliers_gt_3_std": 1266,
+      "outliers_gt_3_std_pct": 6.33,
+      "outliers_gt_5_std": 1215,
+      "extreme_upcoding_gt_10_std": 1073,
+      "iqr_outliers": 1298,
+      "iqr_outliers_pct": 6.49
+    },
+    "administrative_indicators": {
+      "duplicate_claims_count": 530,
+      "duplicate_claims_pct": 2.65,
+      "claims_with_any_missing_fields_pct": 32.06,
+      "missing_fields_breakdown": {
+        "missing_0_fields": 13588,
+        "missing_1_fields": 4014,
+        "missing_2_fields": 1633,
+        "missing_3_fields": 590,
+        "missing_4_fields": 175
+      }
+    },
+    "overall_quality_status": "CLEAN"
+  }
+}

@@ -1,0 +1,25 @@
+# Python & Environment
+.venv/
+env/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Data & Models (ignore large artifacts if needed, keep synthetic generator scripts)
+*.sqlite
+*.db
+
+# Frontend
+frontend/node_modules/
+frontend/dist/
+.DS_Store
+
+# IDE
+.vscode/
+.idea/
+*.swp
